@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UserProfiler_SpriteAtlass
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: Android
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 51
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    - serializedVersion: 3
+      m_BuildTarget: iPhone
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: 51
+      m_TextureCompression: 1
+      m_CompressionQuality: 50
+      m_CrunchedCompression: 0
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 1
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 0
+      enableTightPacking: 0
+      enableAlphaDilation: 1
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: ecd5175573c8e8248a3b0db6338132f6, type: 3}
+    - {fileID: 102900000, guid: 51f0ab80b32f9d74fa67fa8a14c400c4, type: 3}
+    - {fileID: 102900000, guid: ddcb09724451d4bc5bd3e5229f03b501, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: e5e7c540600db436391b335e19d482d5, type: 3}
+  - {fileID: 21300000, guid: ae1d63d10d28b4000b5414174236063a, type: 3}
+  - {fileID: 21300000, guid: 9ca135e4b19996e4c94869d682461aef, type: 3}
+  - {fileID: 21300000, guid: 1cd4521552035ab4ebf6723c91a5dbb9, type: 3}
+  - {fileID: 21300000, guid: 46ede435fa317c4478735b47e947bb95, type: 3}
+  - {fileID: 21300000, guid: a05a20077ea374ee099cf935a14fa079, type: 3}
+  - {fileID: 21300000, guid: 6257e4e8e8e89463a9699a45d3979953, type: 3}
+  - {fileID: 21300000, guid: e38c3a9ad9477f94f92b4dbc87784db5, type: 3}
+  - {fileID: 21300000, guid: 02a4e51b74123324db8b1db398212d20, type: 3}
+  - {fileID: 21300000, guid: bf9a4b1cc45cc47e3bd8a63880400952, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - body
+  - Frame
+  - shape038_style01_color08
+  - style03_color08
+  - style02_color08
+  - top
+  - body btn
+  - shape094_style01_color08
+  - shape035_style01_color08
+  - bottom
+  m_RenderDataMap: {}
+  m_Tag: UserProfiler_SpriteAtlass
+  m_IsVariant: 0
