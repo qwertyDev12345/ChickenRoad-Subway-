@@ -1,7 +1,10 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using EnhancedTouch = UnityEngine.InputSystem.EnhancedTouch;
 
 namespace RiverJump
 {
@@ -9,7 +12,18 @@ namespace RiverJump
     {
         public const float RowSpacing = 1.55f;
         public const float StartRowY = -1.2f;
-        public bool IsRoundOver { get; set; }
+        private bool roundOver;
+        private int roundStartedFrame;
+        public bool IsRoundOver
+        {
+            get => roundOver;
+            set
+            {
+                if (roundOver && !value) roundStartedFrame = Time.frameCount;
+                roundOver = value;
+            }
+        }
+        private readonly List<RaycastResult> uiHits = new();
         public bool IsJumping => jumping;
         public int CurrentRow => currentRow;
         public float EstimatedForwardJumpTime
@@ -34,6 +48,10 @@ namespace RiverJump
         private LandingIndicator2D landingIndicator;
         private int currentRow;
 
+        private void OnEnable() => EnhancedTouch.EnhancedTouchSupport.Enable();
+
+        private void OnDisable() => EnhancedTouch.EnhancedTouchSupport.Disable();
+
         private void Start()
         {
             restingScale = transform.localScale;
@@ -51,7 +69,7 @@ namespace RiverJump
 
         private void Update()
         {
-            if (IsRoundOver) return;
+            if (IsRoundOver || Time.frameCount == roundStartedFrame) return;
             FollowPlatform();
             if (jumping) return;
 
@@ -74,25 +92,41 @@ namespace RiverJump
         {
             var mouse = Mouse.current;
             if (mouse == null) return;
-            if (mouse.leftButton.wasReleasedThisFrame && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
+            if (mouse.leftButton.wasPressedThisFrame && !IsOverUI(mouse.position.ReadValue()))
                 Jump(Vector3.forward);
         }
 
         private void ReadTouchscreen()
         {
-            var touchscreen = Touchscreen.current;
-            if (touchscreen == null) return;
-            var touch = touchscreen.primaryTouch;
-            int touchId = touch.touchId.ReadValue();
-            if (touch.press.wasReleasedThisFrame && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject(touchId)))
+            // EnhancedTouch retains short contacts between input updates. Polling
+            // the low-level primaryTouch button can miss these transitions.
+            foreach (var touch in EnhancedTouch.Touch.activeTouches)
+            {
+                if (touch.phase != UnityEngine.InputSystem.TouchPhase.Began) continue;
+                if (IsOverUI(touch.screenPosition)) continue;
                 Jump(Vector3.forward);
+                return;
+            }
+        }
+
+        private bool IsOverUI(Vector2 screenPosition)
+        {
+            var events = EventSystem.current;
+            if (events == null) return false;
+            // Query this contact position directly; cached pointer state can belong
+            // to the previous frame or a touch that has already ended.
+            uiHits.Clear();
+            events.RaycastAll(new PointerEventData(events) { position = screenPosition }, uiHits);
+            foreach (var hit in uiHits)
+                if (hit.module is GraphicRaycaster) return true;
+            return false;
         }
 
         public void RequestJump(Vector3 direction) => Jump(Vector3.forward);
 
         private void Jump(Vector3 direction)
         {
-            if (!jumping)
+            if (!IsRoundOver && !jumping && Time.frameCount != roundStartedFrame)
             {
                 bool dangerous = landingIndicator != null
                     && landingIndicator.IsVisible

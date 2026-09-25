@@ -1,0 +1,6 @@
+{
+  "name": "RiverTapRegressionTests",
+  "references": ["Unity.InputSystem", "Unity.InputSystem.TestFramework", "UnityEngine.UI"],
+  "includePlatforms": [],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

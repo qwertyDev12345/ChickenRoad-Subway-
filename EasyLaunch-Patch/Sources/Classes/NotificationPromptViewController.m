@@ -1,5 +1,33 @@
 #import "NotificationPromptViewController.h"
 
+// Bake the fade into the background pixels once. Rotation scales one UIImage;
+// there is no separate dimming view or layer that can move independently.
+static UIImage *PLDimmedNotificationBackground(UIImage *source)
+{
+    if (!source || source.size.width <= 0 || source.size.height <= 0) return source;
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+    format.scale = source.scale;
+    format.opaque = YES;
+    format.preferredRange = UIGraphicsImageRendererFormatRangeStandard;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+        initWithSize:source.size format:format];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        CGRect bounds = (CGRect){CGPointZero, source.size};
+        [[UIColor blackColor] setFill];
+        [context fillRect:bounds];
+        [source drawInRect:bounds];
+        NSArray *colors = @[(id)[UIColor colorWithWhite:0 alpha:0.45].CGColor,
+                            (id)[UIColor colorWithWhite:0 alpha:0.65].CGColor];
+        CGFloat stops[] = {0, 1};
+        CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+        CGGradientRef gradient = CGGradientCreateWithColors(space, (__bridge CFArrayRef)colors, stops);
+        CGContextDrawLinearGradient(context.CGContext, gradient, CGPointZero,
+                                    CGPointMake(0, source.size.height), 0);
+        CGGradientRelease(gradient);
+        CGColorSpaceRelease(space);
+    }];
+}
+
 @interface NotificationPromptViewController ()
 @property (nonatomic, strong) UIImageView *bgImageView;
 @property (nonatomic, strong) UIView *contentView;
@@ -9,8 +37,6 @@
 @property (nonatomic, strong) UIButton *cancelButton;
 @property (nonatomic, copy) NotificationPromptHandler allowHandler;
 @property (nonatomic, copy) NotificationPromptHandler cancelHandler;
-/// Kept so we can resize it on rotation (it lives inside gradView, not self.view.layer directly).
-@property (nonatomic, strong) CAGradientLayer *gradientLayer;
 @property (nonatomic, assign) BOOL handledAction;
 @end
 
@@ -32,24 +58,12 @@
     self.view.backgroundColor = [UIColor blackColor];
 
     // Background image — использует тот же задник что и экран загрузки
-    _bgImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"LaunchBackground"]];
+    UIImage *background = image ?: [UIImage imageNamed:@"LaunchBackground"];
+    _bgImageView = [[UIImageView alloc] initWithImage:PLDimmedNotificationBackground(background)];
     _bgImageView.contentMode = UIViewContentModeScaleAspectFill;
     _bgImageView.translatesAutoresizingMaskIntoConstraints = NO;
     _bgImageView.clipsToBounds = YES;
     [self.view addSubview:_bgImageView];
-
-    // Gradient overlay to darken image
-    _gradientLayer = [CAGradientLayer layer];
-    _gradientLayer.colors = @[(id)[UIColor colorWithWhite:0.0 alpha:0.45].CGColor,
-                               (id)[UIColor colorWithWhite:0.0 alpha:0.65].CGColor];
-    _gradientLayer.startPoint = CGPointMake(0.5, 0.0);
-    _gradientLayer.endPoint = CGPointMake(0.5, 1.0);
-
-    UIView *gradView = [UIView new];
-    gradView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:gradView];
-    // frame will be set to final bounds in viewDidLayoutSubviews
-    [gradView.layer insertSublayer:_gradientLayer atIndex:0];
 
     // Container for labels/buttons
     _contentView = [UIView new];
@@ -109,11 +123,6 @@
         [self.bgImageView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.bgImageView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
 
-        [gradView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
-        [gradView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
-        [gradView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [gradView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-
         [self.contentView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
         // Desired vertical center (safe-area) — lower priority so inequality clamps can win.
         ({  NSLayoutConstraint *c = [self.contentView.centerYAnchor
@@ -152,13 +161,6 @@
     ]];
 
     return self;
-}
-
-- (void)viewDidLayoutSubviews
-{
-    [super viewDidLayoutSubviews];
-    // Keep gradient filling the whole screen on every rotation.
-    _gradientLayer.frame = self.view.bounds;
 }
 
 - (void)onAllow:(id)sender

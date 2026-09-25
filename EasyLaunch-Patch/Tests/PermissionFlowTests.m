@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import <UserNotifications/UserNotifications.h>
+#import <QuartzCore/QuartzCore.h>
 #import "PreloadViewController.h"
 #import "NotificationPromptViewController.h"
 #import "PLLaunchDiagnostics.h"
@@ -343,6 +344,48 @@
     XCTAssertFalse([[PLLaunchDiagnostics report] containsString:@"secret-token"]);
     XCTAssertEqual([PLLaunchDiagnostics record:(PLLaunchEvent)999 value:1], 0);
     XCTAssertEqual([PLLaunchDiagnostics record:PLLaunchEventSkipTapped value:1], 1);
+}
+- (void)testNotificationDimmingCoversViewAfterRepeatedResize {
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(32, 32)];
+    UIImage *source = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [UIColor.whiteColor setFill];
+        [context fillRect:CGRectMake(0, 0, 32, 32)];
+    }];
+    NotificationPromptViewController *prompt = [[NotificationPromptViewController alloc]
+        initWithTitle:@"Notifications" message:@"Allow notifications"
+        backgroundImage:source allowHandler:^{} cancelHandler:^{}];
+    UIImageView *background = nil;
+    for (UIView *child in prompt.view.subviews)
+        if ([child isKindOfClass:UIImageView.class]) background = (UIImageView *)child;
+    XCTAssertNotNil(background.image);
+    XCTAssertEqual(prompt.view.subviews.count, 2u); // One image and the button/text container.
+    UIImage *composite = background.image;
+    XCTAssertTrue(CGSizeEqualToSize(composite.size, source.size));
+    uint8_t pixel[4] = {0};
+    CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+    CGContextRef bitmap = CGBitmapContextCreate(pixel, 1, 1, 8, 4, space,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextDrawImage(bitmap, CGRectMake(0, 0, 1, 1), composite.CGImage);
+    CGContextRelease(bitmap);
+    CGColorSpaceRelease(space);
+    // White source pixels must actually be darkened in the resulting bitmap.
+    XCTAssertGreaterThan(pixel[0], 70);
+    XCTAssertLessThan(pixel[0], 160);
+    NSArray<NSValue *> *sizes = @[
+        [NSValue valueWithCGSize:CGSizeMake(393, 852)],
+        [NSValue valueWithCGSize:CGSizeMake(852, 393)],
+        [NSValue valueWithCGSize:CGSizeMake(1024, 768)],
+        [NSValue valueWithCGSize:CGSizeMake(393, 852)]
+    ];
+    for (NSValue *size in sizes) {
+        prompt.view.frame = (CGRect){CGPointZero, size.CGSizeValue};
+        [prompt.view setNeedsLayout];
+        [prompt.view layoutIfNeeded];
+        XCTAssertTrue(CGRectEqualToRect(background.frame, prompt.view.bounds));
+        XCTAssertEqual(background.image, composite);
+        XCTAssertEqual(background.contentMode, UIViewContentModeScaleAspectFill);
+        XCTAssertTrue(background.clipsToBounds);
+    }
 }
 - (void)testManualReportDoesNotLoadViewOrChangeNavigationState {
     WebViewController *web = [[WebViewController alloc] initWithURL:[NSURL URLWithString:@"https://example.invalid/test"]];

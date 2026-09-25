@@ -91,10 +91,11 @@ platform :ios do
       xcodeproj: "#{ENV['IOS_BUILD_PATH']}/iOS/Unity-iPhone.xcodeproj"
     )
 
-    build_app(
+    ipa_path = build_app(
       project: "#{ENV['IOS_BUILD_PATH']}/iOS/Unity-iPhone.xcodeproj",
       scheme: ENV["XC_TARGET_NAME"],
-      xcargs: "-allowProvisioningUpdates IPHONEOS_DEPLOYMENT_TARGET=16.0",
+      configuration: "Release",
+      xcargs: "-allowProvisioningUpdates IPHONEOS_DEPLOYMENT_TARGET=16.0 DEAD_CODE_STRIPPING=YES STRIP_INSTALLED_PRODUCT=YES COPY_PHASE_STRIP=YES",
       export_team_id: team_id,
       verbose: true,
       export_options: {
@@ -104,6 +105,10 @@ platform :ios do
         compileBitcode: false,
       }
     )
+
+    # Check both download artifact and uncompressed app before publishing.
+    sh("python3", File.expand_path("../scripts/check_ios_size.py", __dir__),
+       ipa_path, "--report", File.expand_path("../build/ios-size-report.json", __dir__))
 
     upload_to_testflight(
       apple_id: ENV["APPLE_ID_DIGITS"],

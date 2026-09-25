@@ -725,6 +725,10 @@ namespace RiverJump
             var hint = CreateText(hud, "Control Hint", "TAP  •  SPACE  •  ↑", 30, TextAnchor.MiddleCenter, new Vector2(0, 22), new Vector2(620, 60), new Vector2(0.5f, 0));
             hint.color = new Color(1f, 1f, 1f, 0.72f);
 
+            // Only the actual action button should intercept gameplay taps.
+            foreach (var graphic in gameplayHud.GetComponentsInChildren<Graphic>(true))
+                graphic.raycastTarget = graphic.gameObject == cashOutButton.gameObject;
+
             BuildMenu(canvas.transform);
             BuildResultOverlay(canvas.transform);
             BuildSettingsOverlay(canvas.transform);
@@ -882,6 +886,7 @@ namespace RiverJump
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.material = text.defaultMaterial;
+            text.raycastTarget = false;
             var shadow = obj.AddComponent<Shadow>();
             shadow.effectColor = new Color(0, 0, 0, 0.42f);
             shadow.effectDistance = new Vector2(2, -3);

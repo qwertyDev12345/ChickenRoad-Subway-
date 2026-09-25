@@ -424,6 +424,14 @@ jobs:
           LAST_UPLOADED_BUILD_NUMBER: ${{ vars.LAST_UPLOADED_BUILD_NUMBER || secrets.LAST_UPLOADED_BUILD_NUMBER }}
           MAJOR_VERSION: ${{ vars.MAJOR_VERSION || secrets.MAJOR_VERSION }}
 
+      - name: Save iOS size report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-size-report
+          path: build/ios-size-report.json
+          if-no-files-found: warn
+
       - name: Upload complete Xcode build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
